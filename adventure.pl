@@ -387,5 +387,7 @@ puzzle(_).
 
 read_words(W):-read_string(user_input,"\n\r","\n\r",_,L),split_string(L,"\t ","\t ",W).
 
-look(Location):-name(ConstName, Location),long_desc(ConstName, Ldesc),write(Ldesc).
+look(Location):-
+    name(ConstName, Location),long_desc(ConstName, Ldesc),write(Ldesc),
+    door(ConstName, RdoorConst),nl,nl,short_desc(RdoorConst, RdoorShort),name(RdoorConst, RdoorName),write(RdoorName),write(": "),write(RdoorShort).
  
