@@ -1,6 +1,8 @@
 :- dynamic here/1.
 :- dynamic has/1.
 :- dynamic location/2.
+:- dynamic look/1.
+:- dynamic study/1.
 
 here(bedroom).
 
@@ -384,3 +386,46 @@ puzzle(green_beam):-write("Dr. Sundberg escorts you out saying 'Sorry, this is a
 puzzle(_).
 
 read_words(W):-read_string(user_input,"\n\r","\n\r",_,L),split_string(L,"\t ","\t ",W).
+
+look(Location):-
+    % write the long description of the object if it exists
+    name(CurrentLocationConst, Location),
+    long_desc(CurrentLocationConst, CurrentLocationLongDesc),
+    write("========================"),nl,
+    write("=   Look Description   ="),nl,
+    write("========================"),nl,
+    write("|| DESC || => "),
+    write(CurrentLocationLongDesc),nl,
+    % write the name of all nearby rooms (doors between)=
+    door(CurrentLocationConst, RightDoorConstName),
+    name(RightDoorConstName, RightDoorNameString),
+    short_desc(RightDoorConstName, RightDoorShortDesc),
+    write("|| ROOM || => "),
+    write(RightDoorNameString),write(": "),write(RightDoorShortDesc),nl,fail.
+look(Location):-
+    % write the name of all objects at a given location
+    name(CurrentLocationConst, Location),
+    location(ItemConstName, CurrentLocationConst),
+    name(ItemConstName, ItemNameString),
+    short_desc(ItemConstName, ObjectShortDesc),
+    write("|| ITEM || => "),
+    write(ItemNameString),write(": "),write(ObjectShortDesc),nl,fail.
+look(_). % just don't return false
+
+study(Location):-
+    % write the long description of the object if it exists
+    name(CurrentLocationConst, Location),
+    long_desc(CurrentLocationConst, CurrentLocationLongDesc),
+    write("========================="),nl,
+    write("=   Study Description   ="),nl,
+    write("========================="),nl,
+    write(CurrentLocationLongDesc),nl,
+    % write the name of all contents
+    name(CurrentLocationConst, Location),
+    location(ItemConstName, CurrentLocationConst),
+    name(ItemConstName, ItemNameString),
+    short_desc(ItemConstName, ObjectShortDesc),
+    write("|| ITEM || => "),
+    write(ItemNameString),write(": "),write(ObjectShortDesc),nl,fail.
+study(_). 
+ 
