@@ -1,6 +1,8 @@
 :- dynamic here/1.
 :- dynamic has/1.
 :- dynamic location/2.
+:- dynamic look/1.
+:- dynamic study/1.
 
 here(bedroom).
 
@@ -384,3 +386,7 @@ puzzle(green_beam):-write("Dr. Sundberg escorts you out saying 'Sorry, this is a
 puzzle(_).
 
 read_words(W):-read_string(user_input,"\n\r","\n\r",_,L),split_string(L,"\t ","\t ",W).
+
+look(Location):-name(_, Location),write("this is a test").
+% displayBoard:-displayCell(upperleft),write("|"),displayCell(uppercenter),write("|"),displayCell(upperright),nl,write("-+-+-"),nl, displayCell(centerleft),write("|"),displayCell(centercenter),write("|"),displayCell(centerright),nl,write("-+-+-"),nl, displayCell(lowerleft),write("|"),displayCell(lowercenter),write("|"),displayCell(lowerright),nl.
+ 
