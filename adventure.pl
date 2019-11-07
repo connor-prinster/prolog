@@ -391,5 +391,7 @@ look(Location):-
     write("==================="),nl,write("=   Description   ="),nl,write("==================="),nl,
     name(ClConst, Location),long_desc(ClConst, ClLong),write(ClLong),
     nl,nl,write("========================"),nl,write("=   Locations Nearby   ="),nl,write("========================"),nl,
-    door(ClConst, RDoorConstName),name(RDoorConstName, RDoorNameString),short_desc(RDoorConstName, RDoorShortDesc),write(RDoorNameString),write(": "),write(RDoorShortDesc),nl,fail.
+    door(ClConst, RDoorConstName),name(RDoorConstName, RDoorNameString),short_desc(RDoorConstName, RDoorShortDesc),write(RDoorNameString),write(": "),write(RDoorShortDesc),nl,fail,
+    nl,nl,write("===================="),nl,write("=   Items Nearby   ="),nl,write("===================="),nl.
+
  
