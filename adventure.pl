@@ -394,6 +394,8 @@ look(Location):-
     write("========================"),nl,
     write("=   Look Description   ="),nl,
     write("========================"),nl,
+    write("|| LOCATION || => "),
+    write(Location),nl,
     write("|| DESC || => "),
     write(CurrentLocationLongDesc),nl,
     % write the name of all nearby rooms (doors between)=
@@ -419,6 +421,9 @@ study(Location):-
     write("========================="),nl,
     write("=   Study Description   ="),nl,
     write("========================="),nl,
+    write("|| STUDYING || => "),
+    write(Location),nl,
+    write("|| DESC || => "),
     write(CurrentLocationLongDesc),nl,
     % write the name of all contents
     name(CurrentLocationConst, Location),
