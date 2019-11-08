@@ -388,10 +388,44 @@ puzzle(_).
 read_words(W):-read_string(user_input,"\n\r","\n\r",_,L),split_string(L,"\t ","\t ",W).
 
 look(Location):-
-    write("==================="),nl,write("=   Description   ="),nl,write("==================="),nl,
-    name(ClConst, Location),long_desc(ClConst, ClLong),write(ClLong),
-    nl,nl,write("========================"),nl,write("=   Locations Nearby   ="),nl,write("========================"),nl,
-    door(ClConst, RDoorConstName),name(RDoorConstName, RDoorNameString),short_desc(RDoorConstName, RDoorShortDesc),write(RDoorNameString),write(": "),write(RDoorShortDesc),nl,fail,
-    nl,nl,write("===================="),nl,write("=   Items Nearby   ="),nl,write("===================="),nl.
+    % write the long description of the object if it exists
+    name(CurrentLocationConst, Location),
+    long_desc(CurrentLocationConst, CurrentLocationLongDesc),
+    write("========================"),nl,
+    write("=   Look Description   ="),nl,
+    write("========================"),nl,
+    write("|| DESC || => "),
+    write(CurrentLocationLongDesc),nl,
+    % write the name of all nearby rooms (doors between)=
+    door(CurrentLocationConst, RightDoorConstName),
+    name(RightDoorConstName, RightDoorNameString),
+    short_desc(RightDoorConstName, RightDoorShortDesc),
+    write("|| ROOM || => "),
+    write(RightDoorNameString),write(": "),write(RightDoorShortDesc),nl,fail.
+look(Location):-
+    % write the name of all objects at a given location
+    name(CurrentLocationConst, Location),
+    location(ItemConstName, CurrentLocationConst),
+    name(ItemConstName, ItemNameString),
+    short_desc(ItemConstName, ObjectShortDesc),
+    write("|| ITEM || => "),
+    write(ItemNameString),write(": "),write(ObjectShortDesc),nl,fail.
+look(_). % just don't return false
 
+study(Location):-
+    % write the long description of the object if it exists
+    name(CurrentLocationConst, Location),
+    long_desc(CurrentLocationConst, CurrentLocationLongDesc),
+    write("========================="),nl,
+    write("=   Study Description   ="),nl,
+    write("========================="),nl,
+    write(CurrentLocationLongDesc),nl,
+    % write the name of all contents
+    name(CurrentLocationConst, Location),
+    location(ItemConstName, CurrentLocationConst),
+    name(ItemConstName, ItemNameString),
+    short_desc(ItemConstName, ObjectShortDesc),
+    write("|| ITEM || => "),
+    write(ItemNameString),write(": "),write(ObjectShortDesc),nl,fail.
+study(_). 
  
