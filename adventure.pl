@@ -1,8 +1,9 @@
 :- dynamic here/1.
 :- dynamic has/1.
 :- dynamic location/2.
-:- dynamic look/1.
-:- dynamic study/1.
+:- dynamic currentArea/1.
+:- dynamic holding/1.
+:- dynamic inventory/0.
 
 here(bedroom).
 
@@ -110,7 +111,6 @@ location(laundry_soap,laundry_room).
 location(lost_homework,engr).
 location(medium_disk,pylon_a).
 location(movie, roomate_room).
-location(note,bedroom).
 location(note,bedroom).
 location(pylon_a,secret_lab).
 location(pylon_b,secret_lab).
@@ -387,13 +387,13 @@ long_desc(money, "A couple of dollars found on your dresser. Youve heard it can 
 long_desc(vending_machine, "The vending machine is stocked with a large variety of chips. The machine requires money to use, of course.").
 
 
-puzzle(laser_lab):-has(goggles),!.
+puzzle(laser_lab):-haveObject(goggles),!.
 puzzle(laser_lab):-write("It is too dangerous to go in without eye protection."),nl,!,fail.
-puzzle(secret_lab):-has(key),!.
+puzzle(secret_lab):-haveObject(key),!.
 puzzle(secret_lab):-write("The door is locked, so you cant get in"),nl,!,fail.
-puzzle(gas_lab):-has(combination_gas),!.
+puzzle(gas_lab):-haveObject(combination_gas),!.
 puzzle(gas_lab):-write("The lights are off and the door is locked. There must not be any friends in the GAS Lab right now, you need the combination to unlock the door").
-puzzle(green_beam):-has(potion),write("You quaff some potion so that Dr. Sundberg cant see you."),nl.
+puzzle(green_beam):-haveObject(potion),write("You quaff some potion so that Dr. Sundberg cant see you."),nl.
 puzzle(green_beam):-write("Dr. Sundberg escorts you out saying 'Sorry, this is a restricted area'."),nl,!,fail.
 puzzle(_).
 
@@ -417,7 +417,7 @@ display_bottom:-display_bottom_disk(pylon_a),display_bottom_disk(pylon_b),displa
 display_bottom:-nl.
 
 %invoke display_pylons to pretty print the final puzzle.
-display_pylons:-write("---A------B------C---"),nl,display_top, display_middle, display_bottom,write("---------------------"),nl,!.
+display_pylons:-write("---R------B------G---"),nl,display_top, display_middle, display_bottom,write("---------------------"),nl,!.
 
 %NLP
 article([the|X]-X).
@@ -540,18 +540,129 @@ object(Type,N,S1-S2):-noun(Type,N,S1-S2).
 
 command([V,O],In) :- verb(Type,V,In-S),object(Type,O,S-[]).
 
-read_words(W):-read_string(user_input,"\n\r","\n\r",_,L),split_string(L,"\t ","\t ",W).
+read_words(W):-
+    read_string(user_input,"\n\r","\n\r",_,L),
+    split_string(L,"\t ","\t ",W).
 
-play :- read_words(W),command(C,W),P=..C,P,win.
+play :- 
+    clean.
+
+clean :- 
+    retractall(currentArea(_)),
+    retractall(inventory(_)),
+    assertz(currentArea(bedroom)).
 
 connection(A,B):-door(A,B).
 connection(A,B):-door(B,A).
+connection(A,B):-location(A,B).
+connection(A,B):-location(B,A).
 
+inventory :-
+    print("You are carrying:"), nl,
+    findall(I, holding(I), Inventory),
+    printlist(Inventory).
+
+put(ItemText):-
+    name(ItemNameConst, ItemText),
+    haveObject(ItemNameConst),
+    retract(holding(ItemNameConst)),
+    write("Removed "),write(ItemText),write(" from inventory"),nl,
+    currentArea(Area),
+    name(Area, AreaText),
+    assertz(location(ItemNameConst, Area)),
+    write("Placed it in/at/on "),write(AreaText). 
+
+haveObject(ItemNameConst) :-
+    holding(L),
+    ItemNameConst = L.
+
+make(ProductText):-
+    name(ProductConst, ProductText),
+    create_recipe(RequiredItem, Ingredients, ProductConst),
+    currentArea(Area),
+    location(RequiredItem, Area),
+    checkMake(Ingredients),
+    makeItem(Ingredients,ProductConst).
+
+makeItem(Ingredients,ProductConst):-
+    destroyObjects(Ingredients),
+    assertz(holding(ProductConst)),
+    name(ProductConst, ProductText),
+    write("Added "), write(ProductText),write(" to your inventory").
+
+destroyObjects([]).
+destroyObjects([X|List]):-
+    destroyObject(X),
+    destroyObjects(List).
+
+destroyObject(ItemNameConst):-
+    retract(holding(ItemNameConst)),
+    name(ItemNameConst, ItemNameText),
+    write("Used "),write(ItemNameText),nl.
+
+checkMake(RequiredItems):-
+    checkList(RequiredItems).
+
+checkList([]).
+checkList([X|List]):-
+    haveObject(X),
+    checkList(List).
+
+printlist([]).
+printlist([X|List]) :-
+    name(X, Text),
+    write(Text),nl,
+    printlist(List).
+
+take(ObjectText):-
+    currentArea(Area),
+    name(ObjectConst, ObjectText),
+    canITake(ObjectText),
+    % location(ObjectConst, AreaConst),
+    \+heavy(ObjectConst),
+    assertz(holding(ObjectConst)),
+    write("Added "), write(ObjectText),write(" to your inventory"),
+    retract(location(ObjectConst, Area)).
+take(_).
+
+where:-
+    currentArea(Area),
+    name(Area, AreaText),
+    write("You are in/at "),
+    write(AreaText).
+
+canIMove(NewLocationText):-
+    currentArea(CurrentLocation),
+    name(NewLocationConst, NewLocationText),
+    connection(NewLocationConst,CurrentLocation).
+
+canITake(ItemText):-
+    currentArea(CurrentLocation),
+    name(ItemLocationConst, ItemText),
+    connection(CurrentLocation, ItemLocationConst).
+
+canI(NewLocationText):-
+    currentArea(CurrentLocation),
+    name(NewLocationConst, NewLocationText),
+    CurrentLocation = NewLocationConst.
+canI(ObjectText):-
+    currentArea(CurrentLocation),
+    name(ObjectConst, ObjectText),
+    location(ObjectConst, CurrentLocation).
+
+move(NewLocationText):-
+    canIMove(NewLocationText),
+    name(NewLocationConst, NewLocationText),
+    puzzle(NewLocationConst),
+    retractall(currentArea(_)),
+    write("You are now in "),write(NewLocationText),
+    assertz(currentArea(NewLocationConst)).
 
 look(Location):-
     % write the long description of the object if it exists
-    name(CurrentLocationConst, Location),
-    long_desc(CurrentLocationConst, CurrentLocationLongDesc),
+    name(LookLocation, Location),
+    canI(Location),
+    long_desc(LookLocation, CurrentLocationLongDesc),
     write("========================"),nl,
     write("=   Look Description   ="),nl,
     write("========================"),nl,
@@ -560,25 +671,18 @@ look(Location):-
     write("|| DESC || => "),
     write(CurrentLocationLongDesc),nl,
     % write the name of all nearby rooms (doors between)
-    connection(CurrentLocationConst, RightDoorConstName),
+    connection(LookLocation, RightDoorConstName),
     name(RightDoorConstName, RightDoorNameString),
     short_desc(RightDoorConstName, RightDoorShortDesc),
-    write("|| ROOM || => "),
+    write("|| NEARBY || => "),
     write(RightDoorNameString),write(": "),write(RightDoorShortDesc),nl,fail.
-look(Location):-
-    % write the name of all objects at a given location
-    name(CurrentLocationConst, Location),
-    location(ItemConstName, CurrentLocationConst),
-    name(ItemConstName, ItemNameString),
-    short_desc(ItemConstName, ObjectShortDesc),
-    write("|| ITEM || => "),
-    write(ItemNameString),write(": "),write(ObjectShortDesc),nl,fail.
-look(_). % just don't return false
+look(_).
 
 study(Location):-
     % write the long description of the object if it exists
-    name(CurrentLocationConst, Location),
-    long_desc(CurrentLocationConst, CurrentLocationLongDesc),
+    name(StudyLocation, Location),
+    canI(Location),
+    long_desc(StudyLocation, CurrentLocationLongDesc),
     write("========================="),nl,
     write("=   Study Description   ="),nl,
     write("========================="),nl,
@@ -587,11 +691,97 @@ study(Location):-
     write("|| DESC || => "),
     write(CurrentLocationLongDesc),nl,
     % write the name of all contents
-    name(CurrentLocationConst, Location),
-    location(ItemConstName, CurrentLocationConst),
+    name(StudyLocation, Location),
+    location(ItemConstName, StudyLocation),
     name(ItemConstName, ItemNameString),
     short_desc(ItemConstName, ObjectShortDesc),
     write("|| ITEM || => "),
     write(ItemNameString),write(": "),write(ObjectShortDesc),nl,fail.
-study(_). 
- 
+study(_).
+
+lookless(Location):-
+    % write the long description of the object if it exists
+    name(LookLocation, Location),
+    long_desc(LookLocation, CurrentLocationLongDesc),
+    write("========================"),nl,
+    write("=   Look Description   ="),nl,
+    write("========================"),nl,
+    write("|| LOCATION || => "),
+    write(Location),nl,
+    write("|| DESC || => "),
+    write(CurrentLocationLongDesc),nl,
+    % write the name of all nearby rooms (doors between)
+    connection(LookLocation, RightDoorConstName),
+    name(RightDoorConstName, RightDoorNameString),
+    short_desc(RightDoorConstName, RightDoorShortDesc),
+    write("|| NEARBY || => "),
+    write(RightDoorNameString),write(": "),write(RightDoorShortDesc),nl,fail.
+lookless(_).
+
+studyless(Location):-
+    % write the long description of the object if it exists
+    name(StudyLocation, Location),
+    long_desc(StudyLocation, CurrentLocationLongDesc),
+    write("========================="),nl,
+    write("=   Study Description   ="),nl,
+    write("========================="),nl,
+    write("|| STUDYING || => "),
+    write(Location),nl,
+    write("|| DESC || => "),
+    write(CurrentLocationLongDesc),nl,
+    % write the name of all contents
+    name(StudyLocation, Location),
+    location(ItemConstName, StudyLocation),
+    name(ItemConstName, ItemNameString),
+    short_desc(ItemConstName, ObjectShortDesc),
+    write("|| ITEM || => "),
+    write(ItemNameString),write(": "),write(ObjectShortDesc),nl,fail.
+studyless(_).
+
+moveless(NewLocationText):-
+    name(NewLocationConst, NewLocationText),
+    retractall(currentArea(_)),
+    write("You are now in "),write(NewLocationText),
+    assertz(currentArea(NewLocationConst)).
+
+takeless(ObjectText):-
+    currentArea(Area),
+    name(ObjectConst, ObjectText),
+    \+heavy(ObjectConst),
+    \+door(ObjectConst,_),
+    assertz(holding(ObjectConst)),
+    write("Added "), write(ObjectText),write(" to your inventory"),
+    retract(location(ObjectConst, Area)).
+takeless(_).
+
+putless(ObjectText, NewAreaText):-
+    name(ObjectNameConst, ObjectText),
+    name(NewAreaConst, NewAreaText),
+    assertz(location(ObjectNameConst, NewAreaConst)),
+    write("Placed "),write(ObjectText),write(" at/on/in "),write(NewAreaText).
+
+makeless(ProductText):-
+    name(ProductConst, ProductText),
+    create_recipe(_, _, ProductConst),
+    takeless(ProductText).
+
+transferless(DiskText, NewPylonText):-
+    name(DiskConst, DiskText),
+    name(NewPylonConst, NewPylonText),
+    location(DiskConst, CurrentPylon),
+    name(CurrentPylon, CurrentPylonText),
+    \+location(DiskConst, NewPylonConst),
+    retract(location(DiskConst, CurrentPylon)),
+    assertz(location(DiskConst, NewPylonConst)),
+    write("Successfully moved "),write(DiskText),write(" from "),write(CurrentPylonText),write(" to "),write(NewPylonText),nl,
+
+    display_pylons,
+    location(small_disk, pylon_c),
+    location(medium_disk, pylon_c),
+    location(large_disk, pylon_c),
+    write("==================="),nl,
+    write("=  You have won!  ="),nl,
+    write("==================="),nl,
+    halt.
+transferless(_,_).
+    
