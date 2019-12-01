@@ -699,6 +699,38 @@ study(Location):-
     write(ItemNameString),write(": "),write(ObjectShortDesc),nl,fail.
 study(_).
 
+checkSecretLab(Location):-
+    Location = secret_lab.
+
+transfer(DiskText, NewPylonText):-
+    currentArea(CurrentLocation),
+    checkSecretLab(CurrentLocation),
+    name(small_disk, DiskText),
+    transferless(DiskText, NewPylonText).
+transfer(DiskText, NewPylonText):-
+    currentArea(CurrentLocation),
+    checkSecretLab(CurrentLocation),
+    name(medium_disk, DiskText),
+    name(NewPylonConst, NewPylonText),
+    \+location(small_disk, NewPylonConst),
+    transferless(DiskText, NewPylonText).
+transfer(DiskText, NewPylonText):-
+    currentArea(CurrentLocation),
+    checkSecretLab(CurrentLocation),
+    name(large_disk, DiskText),
+    name(NewPylonConst, NewPylonText),
+    \+location(small_disk, NewPylonConst),
+    \+location(medium_disk, NewPylonConst),
+    transferless(DiskText, NewPylonText).
+transfer(_,_):-
+    write("FAILURE TO MOVE. INVALID INPUT"),nl,
+    display_pylons.
+
+% The small disk can be moved from and to any pylon
+% The medium disk can be moved from and to any pylon that does not contain the small disk
+% The large disk can be moved from and to any pylon that does not contain the small or medium disk
+    
+
 lookless(Location):-
     % write the long description of the object if it exists
     name(LookLocation, Location),
